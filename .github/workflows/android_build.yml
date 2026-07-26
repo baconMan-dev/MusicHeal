@@ -22,14 +22,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install flet mutagen
 
+    - name: Setup Java Environment (Required for Flutter/Android Build)
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
     - name: Execute Standalone Application Compilation
       run: |
-        # Package the pure python layout directly into an installable android package
-        flet pack main.py --apk
+        # Use the official build engine to compile your python file into a mobile APK package
+        flet build apk main.py --no-asms
 
     - name: Upload Finalized Standalone APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: MusicHeal-Standalone-App
-        path: dist/*.apk
-        retention-days: 7
+        path: build/apk/*.apk
+        retention-
+        days: 7

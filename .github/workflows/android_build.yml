@@ -1,35 +1,27 @@
 name: Android Standalone APK Build Automation
-
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout Source Code
       uses: actions/checkout@v4
-
     - name: Configure Java Development Kit Environment
       uses: actions/setup-java@v4
       with:
         distribution: 'zulu'
         java-version: '17'
-
-    - name: Configure Complete Application Directory Tree
+    - name: Execute Full Automation Build Pipeline
       run: |
         mkdir -p app/src/main/python
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/musicheal/app
-        [ -f main.py ] && mv main.py app/src/main/python/main.py || find . -name "main.py" -exec mv {} app/src/main/python/main.py \;
-        [ -f activity_main.xml ] && mv activity_main.xml app/src/main/res/layout/activity_main.xml || find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \;
-        [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java || find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \;
-
-    - name: Generate Local Build Configuration Scripts
-      run: |
+        find . -name "main.py" -exec mv {} app/src/main/python/main.py \; || true
+        find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \; || true
+        find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \; || true
         cat << 'GEOF' > build.gradle
         buildscript {
             repositories { google(); mavenCentral() }
@@ -45,10 +37,7 @@ jobs:
         rootProject.name = "MusicHeal"
         GEOF
         cat << 'GEOF' > app/build.gradle
-        plugins {
-            id 'com.android.application'
-            id 'com.chaquo.python'
-        }
+        plugins { id 'com.android.application'; id 'com.chaquo.python' }
         android {
             namespace 'com.musicheal.app'
             compileSdk 34
@@ -61,27 +50,17 @@ jobs:
                 ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
             }
         }
-        chaquopy {
-            defaultConfig {
-                pip { install "mutagen" }
-            }
-        }
+        chaquopy { defaultConfig { pip { install "mutagen" } } }
         dependencies {
             implementation 'androidx.appcompat:appcompat:1.6.1'
             implementation 'com.google.android.material:material:1.11.0'
         }
         GEOF
-
-    - name: Inject Android Application Manifest Metadata
-      run: |
         cat << 'MEOF' > app/src/main/AndroidManifest.xml
         <manifest xmlns:android="http://android.com">
             <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
             <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-            <application
-                android:allowBackup="true"
-                android:label="MusicHeal"
-                android:theme="@style/Theme.AppCompat.NoActionBar">
+            <application android:allowBackup="true" android:label="MusicHeal" android:theme="@style/Theme.AppCompat.NoActionBar">
                 <activity android:name="com.musicheal.app.MainActivity" android:exported="true">
                     <intent-filter>
                         <action android:name="android.intent.action.MAIN" />
@@ -91,20 +70,13 @@ jobs:
             </application>
         </manifest>
         MEOF
-
-    - name: Setup Dynamic Wrapper
-      run: |
         npm install -g gradle-wrapper || true
         gradle wrapper --gradle-version 8.5
         chmod +x gradlew
-
-    - name: Execute Native Project Compilation
-      run: ./gradlew assembleDebug
-
+        ./gradlew assembleDebug
     - name: Upload Finalized Standalone APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: MusicHeal-Standalone-App
         path: app/build/outputs/apk/debug/app-debug.apk
-        retenti
-        on-days: 7
+        retention-days: 7

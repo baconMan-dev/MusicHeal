@@ -1,45 +1,25 @@
-name: Compile Standalone Mobile App
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v4
-    - name: Configure Java Development Kit Environment
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-    - name: Configure Python Environment
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    - name: Execute Full Automation Build Pipeline
+     - name: Execute Full Automation Build Pipeline
       run: |
         python -m pip install --upgrade pip
         pip install flet mutagen
+
         cat << 'EOF' > webview_app.py
         import flet as ft
+
         def main(page: ft.Page):
             page.title = "MusicHeal Dashboard"
-            page.background_color = "#121212"
-            page.padding = 20
-            lbl = ft.Text("System Active", color="#00FF00", size=24)
-            btn = ft.ElevatedButton("START MUSIC HEAL", bgcolor="#00FF00", color="#000000", height=60, width=400)
-            page.add(lbl, ft.Container(height=20), btn)
+            page.add(ft.Text("System Active"))
         ft.app(target=main)
         EOF
-        flet build apk --target webview_app.py --no-asms || true
+
+        flet build apk webview_app.py
+
+        APK=$(find . -name "*.apk" | head -n 1)
+
+        if [ -z "$APK" ]; then
+          echo "APK not found!"
+          exit 1
+        fi
+
         mkdir -p build/output
-        find . -name "*.apk" -exec mv {} build/output/app-debug.apk \; || touch build/output/app-debug.apk
-    - name: Upload Finalized Standalone APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: MusicHeal-Standalone-App
-        path: build/output/app-debug.apk
-        retention-days: 7
-        
+        cp "$APK" build/output/app-debug.apk

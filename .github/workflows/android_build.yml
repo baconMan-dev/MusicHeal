@@ -20,12 +20,12 @@ jobs:
         gradle-version: '8.5'
     - name: Execute Full Automation Build Pipeline
       run: |
-        mkdir -p app/src/main/python
-        mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/java/com/musicheal/app
-        find . -name "main.py" -exec mv {} app/src/main/python/main.py \; || true
-        find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \; || true
-        find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \; || true
+        mkdir -p src/main/python
+        mkdir -p src/main/res/layout
+        mkdir -p src/main/java/com/musicheal/app
+        find . -name "main.py" -exec mv {} src/main/python/main.py \; || true
+        find . -name "activity_main.xml" -exec mv {} src/main/res/layout/activity_main.xml \; || true
+        find . -name "MainActivity.java" -exec mv {} src/main/java/com/musicheal/app/MainActivity.java \; || true
         cat << 'GEOF' > build.gradle
         buildscript {
             repositories { google(); mavenCentral() }
@@ -34,14 +34,11 @@ jobs:
                 classpath 'com.chaquo.python:gradle:15.0.1'
             }
         }
+        plugins {
+            id 'com.android.application'
+            id 'com.chaquo.python'
+        }
         allprojects { repositories { google(); mavenCentral() } }
-        GEOF
-        cat << 'GEOF' > settings.gradle
-        include ':app'
-        rootProject.name = "MusicHeal"
-        GEOF
-        cat << 'GEOF' > app/build.gradle
-        plugins { id 'com.android.application'; id 'com.chaquo.python' }
         android {
             namespace 'com.musicheal.app'
             compileSdk 34
@@ -60,7 +57,7 @@ jobs:
             implementation 'com.google.android.material:material:1.11.0'
         }
         GEOF
-        cat << 'MEOF' > app/src/main/AndroidManifest.xml
+        cat << 'MEOF' > src/main/AndroidManifest.xml
         <manifest xmlns:android="http://android.com">
             <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
             <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
@@ -79,5 +76,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: MusicHeal-Standalone-App
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: build/outputs/apk/debug/app-debug.apk
         retention-days: 7

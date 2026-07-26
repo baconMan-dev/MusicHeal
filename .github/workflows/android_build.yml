@@ -41,10 +41,10 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/musicheal/app
 
-        # Rearrange files into correct Android paths
-        mv main.py app/src/main/python/main.py
-        mv activity_main.xml app/src/main/res/layout/activity_main.xml
-        mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java
+        # Move the loose files into correct Android project paths
+        [ -f main.py ] && mv main.py app/src/main/python/main.py
+        [ -f activity_main.xml ] && mv activity_main.xml app/src/main/res/layout/activity_main.xml
+        [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java
 
         cat << 'GEOF' > app/build.gradle
         plugins {
@@ -94,11 +94,12 @@ jobs:
         </manifest>
         MEOF
 
-    - name: Initialize Gradle Wrapper Environment
-      run: gradle wrapper --gradle-version 8.5
-
-    - name: Grant Gradle Execution Authority
-      run: chmod +x gradlew
+    - name: Initialize Self-Contained Gradle Wrapper Environment
+      run: |
+        # Download and inject a local gradle wrapper so the cloud runner doesn't fail
+        npm install -g gradle-wrapper || true
+        gradle wrapper --gradle-version 8.5
+        chmod +x gradlew
 
     - name: Execute Native Project Compilation
       run: ./gradlew assembleDebug
@@ -108,5 +109,4 @@ jobs:
       with:
         name: MusicHeal-Standalone-App
         path: app/build/outputs/apk/debug/app-debug.apk
-        rete
-        ntion-days: 7
+        retention-days: 7

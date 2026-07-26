@@ -14,6 +14,10 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
+    - name: Setup Native Android Gradle Tooling
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: '8.5'
     - name: Execute Full Automation Build Pipeline
       run: |
         mkdir -p app/src/main/python
@@ -70,10 +74,7 @@ jobs:
             </application>
         </manifest>
         MEOF
-        npm install -g gradle-wrapper || true
-        gradle wrapper --gradle-version 8.5
-        chmod +x gradlew
-        ./gradlew assembleDebug
+        gradle assembleDebug
     - name: Upload Finalized Standalone APK Artifact
       uses: actions/upload-artifact@v4
       with:

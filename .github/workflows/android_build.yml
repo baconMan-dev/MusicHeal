@@ -41,10 +41,10 @@ jobs:
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/musicheal/app
 
-        # Move the loose files into correct Android project paths
-        [ -f main.py ] && mv main.py app/src/main/python/main.py
-        [ -f activity_main.xml ] && mv activity_main.xml app/src/main/res/layout/activity_main.xml
-        [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java
+        # Automatically find and arrange files even if they are loose or nested
+        find . -name "main.py" -exec mv {} app/src/main/python/main.py \;
+        find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \;
+        find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \;
 
         cat << 'GEOF' > app/build.gradle
         plugins {
@@ -96,7 +96,7 @@ jobs:
 
     - name: Initialize Self-Contained Gradle Wrapper Environment
       run: |
-        # Download and inject a local gradle wrapper so the cloud runner doesn't fail
+        # Secure a localized gradle wrapper so compilation runs safely
         npm install -g gradle-wrapper || true
         gradle wrapper --gradle-version 8.5
         chmod +x gradlew

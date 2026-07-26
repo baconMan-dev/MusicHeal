@@ -19,6 +19,18 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
 
+    - name: Configure Complete Application Directory Tree
+      run: |
+        # Explicitly build the required Android Studio structures
+        mkdir -p app/src/main/python
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/java/com/musicheal/app
+
+        # Target loose files and sort them into their strict compile paths
+        [ -f main.py ] && mv main.py app/src/main/python/main.py || find . -name "main.py" -exec mv {} app/src/main/python/main.py \;
+        [ -f activity_main.xml ] && mv activity_main.xml app/src/main/res/layout/activity_main.xml || find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \;
+        [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java || find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \;
+
     - name: Generate Local Build Configuration Scripts
       run: |
         cat << 'GEOF' > build.gradle
@@ -36,15 +48,6 @@ jobs:
         include ':app'
         rootProject.name = "MusicHeal"
         GEOF
-
-        mkdir -p app/src/main/python
-        mkdir -p app/src/main/res/layout
-        mkdir -p app/src/main/java/com/musicheal/app
-
-        # Automatically find and arrange files even if they are loose or nested
-        find . -name "main.py" -exec mv {} app/src/main/python/main.py \;
-        find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \;
-        find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \;
 
         cat << 'GEOF' > app/build.gradle
         plugins {
@@ -96,7 +99,7 @@ jobs:
 
     - name: Initialize Self-Contained Gradle Wrapper Environment
       run: |
-        # Secure a localized gradle wrapper so compilation runs safely
+        # Download and inject a local wrapper environment dynamically
         npm install -g gradle-wrapper || true
         gradle wrapper --gradle-version 8.5
         chmod +x gradlew
@@ -109,4 +112,5 @@ jobs:
       with:
         name: MusicHeal-Standalone-App
         path: app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 7
+        reten
+        tion-days: 7

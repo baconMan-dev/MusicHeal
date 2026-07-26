@@ -1,0 +1,112 @@
+name: Android Standalone APK Build Automation
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Configure Java Development Kit Environment
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Generate Local Build Configuration Scripts
+      run: |
+        cat << 'GEOF' > build.gradle
+        buildscript {
+            repositories { google(); mavenCentral() }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.2.2'
+                classpath 'com.chaquo.python:gradle:15.0.1'
+            }
+        }
+        allprojects { repositories { google(); mavenCentral() } }
+        GEOF
+
+        cat << 'GEOF' > settings.gradle
+        include ':app'
+        rootProject.name = "MusicHeal"
+        GEOF
+
+        mkdir -p app/src/main/python
+        mkdir -p app/src/main/res/layout
+        mkdir -p app/src/main/java/com/musicheal/app
+
+        # Rearrange files into correct Android paths
+        mv main.py app/src/main/python/main.py
+        mv activity_main.xml app/src/main/res/layout/activity_main.xml
+        mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java
+
+        cat << 'GEOF' > app/build.gradle
+        plugins {
+            id 'com.android.application'
+            id 'com.chaquo.python'
+        }
+        android {
+            namespace 'com.musicheal.app'
+            compileSdk 34
+            defaultConfig {
+                applicationId "com.musicheal.app"
+                minSdk 26
+                targetSdk 34
+                versionCode 1
+                versionName "1.0"
+                ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
+            }
+        }
+        chaquopy {
+            defaultConfig {
+                pip { install "mutagen" }
+            }
+        }
+        dependencies {
+            implementation 'androidx.appcompat:appcompat:1.6.1'
+            implementation 'com.google.android.material:material:1.11.0'
+        }
+        GEOF
+
+    - name: Inject Android Application Manifest Metadata
+      run: |
+        cat << 'MEOF' > app/src/main/AndroidManifest.xml
+        <manifest xmlns:android="http://android.com">
+            <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+            <application
+                android:allowBackup="true"
+                android:label="MusicHeal"
+                android:theme="@style/Theme.AppCompat.NoActionBar">
+                <activity android:name="com.musicheal.app.MainActivity" android:exported="true">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN" />
+                        <category android:name="android.intent.category.LAUNCHER" />
+                    </intent-filter>
+                </activity>
+            </application>
+        </manifest>
+        MEOF
+
+    - name: Initialize Gradle Wrapper Environment
+      run: gradle wrapper --gradle-version 8.5
+
+    - name: Grant Gradle Execution Authority
+      run: chmod +x gradlew
+
+    - name: Execute Native Project Compilation
+      run: ./gradlew assembleDebug
+
+    - name: Upload Finalized Standalone APK Artifact to GitHub
+      uses: actions/upload-artifact@v4
+      with:
+        name: MusicHeal-Standalone-App
+        path: app/build/outputs/apk/debug/app-debug.apk
+        rete
+        ntion-days: 7

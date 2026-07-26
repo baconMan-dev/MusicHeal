@@ -21,12 +21,9 @@ jobs:
 
     - name: Configure Complete Application Directory Tree
       run: |
-        # Explicitly build the required Android Studio structures
         mkdir -p app/src/main/python
         mkdir -p app/src/main/res/layout
         mkdir -p app/src/main/java/com/musicheal/app
-
-        # Target loose files and sort them into their strict compile paths
         [ -f main.py ] && mv main.py app/src/main/python/main.py || find . -name "main.py" -exec mv {} app/src/main/python/main.py \;
         [ -f activity_main.xml ] && mv activity_main.xml app/src/main/res/layout/activity_main.xml || find . -name "activity_main.xml" -exec mv {} app/src/main/res/layout/activity_main.xml \;
         [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/com/musicheal/app/MainActivity.java || find . -name "MainActivity.java" -exec mv {} app/src/main/java/com/musicheal/app/MainActivity.java \;
@@ -43,12 +40,10 @@ jobs:
         }
         allprojects { repositories { google(); mavenCentral() } }
         GEOF
-
         cat << 'GEOF' > settings.gradle
         include ':app'
         rootProject.name = "MusicHeal"
         GEOF
-
         cat << 'GEOF' > app/build.gradle
         plugins {
             id 'com.android.application'
@@ -97,9 +92,8 @@ jobs:
         </manifest>
         MEOF
 
-    - name: Initialize Self-Contained Gradle Wrapper Environment
+    - name: Setup Dynamic Wrapper
       run: |
-        # Download and inject a local wrapper environment dynamically
         npm install -g gradle-wrapper || true
         gradle wrapper --gradle-version 8.5
         chmod +x gradlew
@@ -107,10 +101,10 @@ jobs:
     - name: Execute Native Project Compilation
       run: ./gradlew assembleDebug
 
-    - name: Upload Finalized Standalone APK Artifact to GitHub
+    - name: Upload Finalized Standalone APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: MusicHeal-Standalone-App
         path: app/build/outputs/apk/debug/app-debug.apk
-        reten
-        tion-days: 7
+        retenti
+        on-days: 7
